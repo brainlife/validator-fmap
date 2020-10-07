@@ -1,5 +1,7 @@
 {
     "magnitude": "testdata/magnitude.nii.gz",
-    "fieldmap": "testdata/fieldmap.nii.gz"
+    "magnitude_json": "testdata/magnitude.json",
+    "fieldmap": "testdata/fieldmap.nii.gz",
+    "fieldmap_json": "testdata/fieldmap.json"
 }
 

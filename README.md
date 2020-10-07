@@ -1,16 +1,10 @@
-# neuro/anat datatype validator
+# neuro/fmap datatype validator
 
 Brainlife uses this code to validate and normalize input datasets uploaded by users to make sure that the content and format of the data matches the Brainlife datatype.
 
-Currently this App performs following checks
-
-* make sure mrinfo runs successfully on specified t1 file
-* make sure t1 is 3d
-* raise warning if t1 transformation matrix isn't unit matrix (identity matrix)
+Currently this App performs no checks
 
 This service is not meant to be executed outside Brainlife.
-
-In the future, this repo might be incooporated into to [brain-life/datatypes repo](https://github.com/brain-life/datatypes)
 
 ### Authors
 - Soichi Hayashi (hayashis@iu.edu)
