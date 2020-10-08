@@ -34,7 +34,6 @@ specs = {
 
         "phasediff": {"required": [ 
             "phasediff", "phasediff_json",
-            "phasediff", "phasediff_json"
             "magnitude1", "magnitude1_json",
         ], "optional": [
             "magnitude2", "magnitude2_json"
