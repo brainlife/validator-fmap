@@ -36,19 +36,19 @@ specs = {
             "phasediff", "phasediff_json",
             "phasediff", "phasediff_json"
             "magnitude1", "magnitude1_json",
-        ], "optiona": [
+        ], "optional": [
             "magnitude2", "magnitude2_json"
         ]},
 
         "single": {"required": [ 
             "magnitude", "magnitude_json",
             "fieldmap", "fieldmap_json"
-        ], "optiona": []},
+        ], "optional": []},
 
         "pepolar": {"required": [ 
             "epi1", "epi1_json",
             "epi2", "epi2_json"
-        ], "optiona": []}
+        ], "optional": []}
 }
 
 type = None
@@ -77,12 +77,21 @@ for subtype in specs:
     if not hasfiles:
         continue
 
+    #copy required files
     for key in spec["required"]:
         print("copying", key, config[key])
         basename = os.path.basename(config[key])
         if os.path.lexists("output/"+basename):
             os.remove("output/"+basename)
         os.symlink("../"+config[key], "output/"+basename)
+
+    for key in spec["optional"]:
+        if os.path.exists(config[key]):
+            print("copying", key, config[key])
+            basename = os.path.basename(config[key])
+            if os.path.lexists("output/"+basename):
+                os.remove("output/"+basename)
+            os.symlink("../"+config[key], "output/"+basename)
 
     break
 
