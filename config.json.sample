@@ -2,8 +2,6 @@
     "phasediff": "testdata/phasediff.nii.gz",
     "phasediff_json": "testdata/phasediff.json",
     "magnitude1": "testdata/magnitude.nii.gz",
-    "magnitude1_json": "testdata/magnitude.json",
-    "magnitude2": "testdata/magnitude.nii.gz",
-    "magnitude2_json": "testdata/magnitude.json"
+    "magnitude1_json": "testdata/magnitude.json"
 }
 

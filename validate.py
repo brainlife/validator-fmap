@@ -74,7 +74,8 @@ for subtype in specs:
             results["errors"].append("missing requried file %s" % config[key])
             hasfiles = False
     if not hasfiles:
-        continue
+        print("required files missing")
+        break
 
     #copy required files
     for key in spec["required"]:
@@ -85,13 +86,13 @@ for subtype in specs:
         os.symlink("../"+config[key], "output/"+basename)
 
     for key in spec["optional"]:
-        if os.path.exists(config[key]):
-            print("copying", key, config[key])
-            basename = os.path.basename(config[key])
-            if os.path.lexists("output/"+basename):
-                os.remove("output/"+basename)
-            os.symlink("../"+config[key], "output/"+basename)
-
+        if key in config:
+            if os.path.exists(config[key]):
+                print("copying", key, config[key])
+                basename = os.path.basename(config[key])
+                if os.path.lexists("output/"+basename):
+                    os.remove("output/"+basename)
+                os.symlink("../"+config[key], "output/"+basename)
     break
 
 if type == None:
