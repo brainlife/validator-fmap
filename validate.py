@@ -40,8 +40,9 @@ specs = {
         ]},
 
         "single": {"required": [ 
-            "fieldmap", "fieldmap_json"
-        ], "optional": ["magnitude", "magnitude_json"]},
+            "fieldmap", "fieldmap_json",
+            "magnitude", "magnitude_json"
+        ], "optional": []},
 
         "pepolar": {"required": [ 
             "epi1", "epi1_json",
