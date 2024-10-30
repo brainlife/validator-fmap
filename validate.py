@@ -3,108 +3,105 @@
 import os
 import json
 
-# Things that this script checks
-# 
-# * make sure mrinfo runs successfully on specified t1 file
-# * make sure t1 is 3d
-# * raise warning if t1 transformation matrix isn't unit matrix (identity matrix)
+def log(message):
+    print(f"[INFO] {message}")
 
-# display where this is running
-# import socket
-# print(socket.gethostname())
+def log_error(message):
+    print(f"[ERROR] {message}")
+    results["errors"].append(message)
 
+# Load the configuration
+log("Loading configuration from config.json")
 with open('config.json', encoding='utf8') as config_json:
     config = json.load(config_json)
 
 results = {"errors": [], "warnings": [], "datatype_tags": []}
 
-if not os.path.exists("secondary"):
-    os.mkdir("secondary")
+# Ensure secondary and output directories exist
+for directory in ["secondary", "output"]:
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+        log(f"Created directory: {directory}")
+    else:
+        log(f"Directory already exists: {directory}")
 
-if not os.path.exists("output"):
-    os.mkdir("output")
-
+# Specifications for required and optional files for each datatype tag
 specs = {
-        "2phasemag": {"required": [ 
-            "phase1", "phase1_json", 
-            "phase2", "phase2_json", 
-            "magnitude1", "magnitude1_json",
-            "magnitude2", "magnitude2_json",
-        ], "optional": []},
-
-        "phasediff": {"required": [ 
-            "phasediff", "phasediff_json",
-            "magnitude1", "magnitude1_json",
-        ], "optional": [
-            "magnitude2", "magnitude2_json"
-        ]},
-
-        "single": {"required": [ 
-            "fieldmap", "fieldmap_json",
-            "magnitude", "magnitude_json"
-        ], "optional": []},
-
-        "pepolar": {"required": [ 
-            "epi1", "epi1_json",
-            "epi2", "epi2_json"
-        ], "optional": []}
+    "2phasemag": {"required": [ 
+        "phase1", "phase1_json", 
+        "phase2", "phase2_json", 
+        "magnitude1", "magnitude1_json",
+        "magnitude2", "magnitude2_json"
+    ], "optional": []},
+    "phasediff": {"required": [ 
+        "phasediff", "phasediff_json",
+        "magnitude1", "magnitude1_json"
+    ], "optional": [
+        "magnitude2", "magnitude2_json"
+    ]},
+    "single": {"required": [ 
+        "fieldmap", "fieldmap_json",
+        "magnitude", "magnitude_json"
+    ], "optional": []},
+    "pepolar": {"required": [ 
+        "epi1", "epi1_json",
+        "epi2", "epi2_json"
+    ], "optional": []}
 }
 
-type = None
-for subtype in specs:
-    spec = specs[subtype]
-    print("trying as", subtype)
-
-    #see if all required files are present
-    haskeys = True
-    for key in spec["required"]:
-        #print("checking", key)
-        if key not in config:
-            haskeys = False
-    if not haskeys:
-        print(" .. nope")
-        continue
-
-    print("looks like", subtype)
-    type = subtype
-
-    hasfiles = True
-    for key in spec["required"]:
-        if not os.path.exists(config[key]):
-            results["errors"].append("missing requried file %s" % config[key])
-            hasfiles = False
-    if not hasfiles:
-        print("required files missing")
+# Check for the fmap datatype in _inputs
+log("Searching for fmap datatype in config['_inputs']")
+fmap_input = None
+for entry in config.get("_inputs", []):
+    if entry.get("datatype") == "5c390505f9109beac42b00df":  # fmap datatype ID
+        fmap_input = entry
         break
 
-    #copy required files
-    for key in spec["required"]:
-        print("copying", key, config[key])
-        basename = os.path.basename(config[key])
-        if os.path.lexists("output/"+basename):
-            os.remove("output/"+basename)
-        os.symlink("../"+config[key], "output/"+basename)
-
-    for key in spec["optional"]:
-        if key in config:
-            if os.path.exists(config[key]):
-                print("copying", key, config[key])
-                basename = os.path.basename(config[key])
-                if os.path.lexists("output/"+basename):
-                    os.remove("output/"+basename)
-                os.symlink("../"+config[key], "output/"+basename)
-    break
-
-if type == None:
-    results["errors"].append("couldn't figure out the fmap subtype")
+if not fmap_input:
+    log_error("No fmap datatype found in config['_inputs']")
 else:
-    results["datatype_tags"].append(type)
+    # Determine the type based on datatype_tags
+    log("Determining the datatype tag based on 'datatype_tags'")
+    datatype_tags = fmap_input.get("datatype_tags", [])
+    valid_tag = None
+    for tag in specs.keys():
+        if tag in datatype_tags:
+            valid_tag = tag
+            results["datatype_tags"].append(tag)
+            log(f"Detected valid datatype tag: {tag}")
+            break
+    
+    if not valid_tag:
+        log_error("No valid datatype tag found; expected one of: '2phasemag', 'phasediff', 'single', or 'pepolar'")
+    else:
+        # Validate required files for the identified datatype tag
+        log(f"Validating required files for datatype tag: {valid_tag}")
+        spec = specs[valid_tag]
+        has_all_files = True
+        for key in spec["required"]:
+            if key not in config or not os.path.exists(config[key]):
+                log_error(f"Missing required file: {key}")
+                has_all_files = False
+            else:
+                log(f"Found required file: {config[key]}")
+        
+        # Copy required and optional files to the output directory
+        if has_all_files:
+            log("Copying required and optional files to 'output' directory")
+            for key in spec["required"] + spec["optional"]:
+                if key in config and os.path.exists(config[key]):
+                    basename = os.path.basename(config[key])
+                    output_path = os.path.join("output", basename)
+                    if os.path.lexists(output_path):
+                        os.remove(output_path)
+                        log(f"Removed existing symlink: {output_path}")
+                    os.symlink("../" + config[key], output_path)
+                    log(f"Created symlink for {config[key]} at {output_path}")
 
-if len(results["errors"]):
-    print(results)
-            
-#bypass all specified files to output
+# Write results to product.json
+log("Writing results to product.json")
 with open("product.json", "w") as fp:
     json.dump(results, fp)
 
-print("done");
+log("Validation complete.")
+
